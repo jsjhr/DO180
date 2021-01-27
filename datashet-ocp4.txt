@@ -1,0 +1,206 @@
++-----------------------------------------------------------------------------+
+| Comandos imperativos                                                        |
++-----------------------------------------------------------------------------+
+# Sintaxis General
+oc <command>
+
+# Obtener un token de openshift
+oc login <clusterUrl>
+
+# reenvio de puertos 
+oc port-forward <namepod> <portlocal>:<portremoto>
+
+# Crear una nueva aplicacion con un image-stream llamado mysql
+oc new-app mysql --as-deployment-config \
+ MYSQL_USER=user MYSQL_PASSWORD=pass MYSQL_DATABASE=testdb -l db=mysql
+
+# Crear una nueva aplicacion con una imagen docker
+oc new-app --docker-image=myregistry.com/mycompany/myapp --name=myapp \
+ --as-deployment-config
+  # Recursos creados en automatico
+  # DeploymentConfig
+  # ImageStream
+  # Service
+  # ReplicationController
+
+# Creando una nueva aplicacion con un repositorio de codigo fuente
+oc new-app https://github.com/openshift/ruby-hello-world \ 
+ --name=ruby-hello --as-deployment-config
+ # Source-To-Image
+ # ReplicationController
+ # Service
+ # DeploymentConfig
+ # BuildConfig
+ # ImageStream
+
+# Lista todos los recursos disponibles en el cluster
+oc api-resources
+
+# Listar un tipo de recurso en especifico
+oc get RESOURCE_TYPE
+# ej.
+oc get pods
+# ej.
+oc get all
+
+# Obtiene un recurso y lo transforma en yaml
+oc get RESOURCE_TYPE RESOURCE_NAME -o yaml
+
+# Crear recursos
+oc create 
+
+# Editar un recurso
+oc edit   ----> 1 oc get RESOURCE_TYPE RESOURCE_NAME -o yaml 2. open vi 3. oc apply
+
+# Eliminar un recurso
+oc delete RESOURCE_TYPE name
+
+# ejecutar otro proceso en un pod/container
+oc exec CONTAINER_ID
+
+# listar un subconjunto de recursos con una etiqueta (selector)
+oc get svc,dc -l app=nexus
+
+# Exponer un servicio llamado quotedb y dar el nombre quote al servicio
+oc expose service quotedb --name quote
+   # Nombre generado por las rutas de forma predeterminada:
+   route-name-project-name.default-domain
+
+# Obtener pods, en todos los namespaces con un label app=router
+oc get pod --all-namespaces -l app=router
+
+# Describir el pod router
+oc describe pod router-default-xxxxxxxxxxxxx
+   # Se puede observar el wildcard domain
+
+# Obtener imagestream (is) del namespace openshift
+oc get is -n openshift
+
+a)
+                 Repositorio de Source
+oc new-app  ---  Imagen Docker
+                 ImageStream
+                 Templates
+
+b) 
+Templates  --- 
+
+c) Consola Web
+
+# Crear aplicacion con Source-To-Image
+oc new-app --as-deployment-config \ 
+ php~http://my.git.server.com/my-app \
+ --name name=myapp
+
+  # ej php = php:latest = php:7.3
+
+# Crear una aplicacion con el repositorio git en el directorio actual
+
+  # ej. 
+  # git clone http://git.server.com/repo
+  # cd repo
+
+oc new-app --as-deployment-config .
+
+ # Source-To-Image
+#
+
+# Crear una aplicacion a partir de un repo git en un directorio especifico
+oc new-app --as-deployment-config \
+https://github.com/openshift/sti-ruby.git \
+--context-dir=2.0/test/puma-test-app
+
+# Crear una nueva aplicacion de un repo git, a partir de un branch
+oc new-app --as-deployment-config \
+https://github.com/openshift/ruby-hello-world.git#beta4
+
+# Autodeteccion de lenguaje
+# Adivinar en base a los archivos que se encuentran en raiz del proyecto
+ # la imagen de compilador que se debe usar para source-to-image
+
+# Crear una aplicacion pero enviar la salida a un json
+oc -o json new-app --as-deployment-config \
+  php~http://services.lab.example.com/app \
+  --name=myapp > s2i.json
+
+# Obtener los builds 
+oc get builds 
+
+# Muestra los logs de un build en especifico
+oc logs build/myapp-1
+
+# Obtener buildconfig
+oc get buildconfig
+
+# Iniciar un nuevo build
+oc start-build myapp
+
+# Obtener los templates predeterminados 
+oc get templates -n openshift
+
+# Obtener un template y salida en yaml
+oc get template mysql-persistent -n openshift -o yaml
+
+# Publicar un template en el proyecto actual
+oc create -f todo-template.yaml
+
+# Publicar un template en el proyecto openshift
+oc create -f todo-template.yaml -n openshift
+
+# Describir el template mysql-persistent (ver detalles)
+oc describe template mysql-persistent -n openshift
+
+# Mostar los parametros de un template
+oc process --parameters mysql-persistent -n openshift
+
+# Procesamiento de un template (Generar la lista de recursos a crear, stdout)
+oc process -f <filename>
+
+oc process -o [yaml|json] -f <filename>
+
+oc process <uploaded-template-name>
+
+# Redirigir la lista de recursos a crear a un archivo .yaml
+oc process -o yaml -f filename > myapp.yaml
+
+# Ej. Procesar el template mysql.yaml, con parametros y 
+# redirigir la salida a mysqlProcessed.yaml
+oc process -o yaml -f mysql.yaml \
+ -p MYSQL_USER=dev -p MYSQL_PASSWORD=$P4SSD -p MYSQL_DATABASE=bank \
+ -p VOLUME_CAPACITY=10Gi > mysqlProcessed.yaml
+
+# Crea los recursos en openshift
+oc create -f mysqlProcessed.yaml
+
+# Procesa un template con parametros y crea los recursos
+oc process -f mysql.yaml -p MYSQL_USER=dev \
+ -p MYSQL_PASSWORD=$P4SSD -p MYSQL_DATABASE=bank \
+ -p VOLUME_CAPACITY=10Gi | oc create -f -
+
+# Obtiene Persistent Volumes 
+oc get pv
+
+# Obtiene un persistent volume y salida en yaml
+oc get pv pv0001 -o yaml
+
+# Crear un PV a partir de un archivo declarativo
+oc create -f pv1001.yaml
+
+# Crear un PVC a partir de un archivo declarativo
+oc create -f pvc.yaml
+
+# Obtener lista de PVC
+oc get pvc
+
+#Obtener los logs del ultimo build
+oc logs bc/<application-name>
+
+# Iniciar un nuevo build
+oc start-build <application-name>
+
+# Obtener los logs del ultimo deploy
+oc logs dc/<application-name>
+
+# Atenuar la seguridad en openshift para permitir cualquier usuario.
+oc adm policy add-scc-to-user anyuid -z default
+
